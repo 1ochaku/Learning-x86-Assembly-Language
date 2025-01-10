@@ -1,0 +1,4 @@
+*.o	#ignore object files
+*	#ingnore all files
+!*.asm	#allow .asm files
+!.gitignore	#allow .gitignore file
