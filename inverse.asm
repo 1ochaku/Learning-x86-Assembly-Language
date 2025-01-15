@@ -1,27 +1,83 @@
-;!!!!!!!!!! NOTE !!!!!!!!!!!!
-;it takes only 2*2 matrix
-;values can be updated in line 12 and 13
-
 section .data
+	msg db "NOTE: It takes only 2*2 matrix",0x0a
+	len equ $ - msg
+	el1 db "Enter matrix[0][0]:",0
+	l1 equ $ - el1 
+	el2 db "Enter matrix[0][1]:",0
+	l2 equ $ - el2 
+	el3 db "Enter matrix[1][0]:",0
+	l3 equ $ - el3 
+	el4 db "Enter matrix[1][1]:",0
+	l4 equ $ - el4 
 	msg1 db "Original 2*2 Matrix: ", 0x0a
 	len1 equ $ - msg1
 	msg2 db "Determinant value: ", 0
 	len2 equ $ - msg2
 	msg3 db "Inverse Matrix: ", 0x0a
 	len3 equ $ - msg3
-	matrix dd -1, -1
-	       dd -1, -1
+	matrix times 4 dd 0
 	newline db 0x0a
 	space db 0x20
 	dot db "."
 	minus db "-"
+	buff times 12 db 0
+	num times 32 db 0
+
 section .bss
 	det resd 1			;storing the determinant
 	buffer resb 32            ; Buffer for storing the string representation
+	num_read resd 1      ; store converted number
+    	is_negative resb 1   ; flag for negative numbers
 
 section .text
 	global _start
 _start:	
+	mov eax, 4			;printing the original matrix
+	mov ebx, 1
+	mov ecx, msg
+	mov edx, len
+	int 0x80
+
+	mov eax, 4			;printing
+	mov ebx, 1
+	mov ecx, el1
+	mov edx, l1
+	int 0x80
+
+	call read_number		;reading matrix[0][0]
+	mov eax, [num_read]
+	mov [matrix],eax
+	
+	mov eax, 4			;printing
+	mov ebx, 1
+	mov ecx, el2
+	mov edx, l2
+	int 0x80
+
+	call read_number		;reading matrix[0][1]
+	mov eax, [num_read]
+	mov [matrix+4],eax
+
+	mov eax, 4			;printing
+	mov ebx, 1
+	mov ecx, el3
+	mov edx, l3
+	int 0x80
+	
+	call read_number		;reading matrix[1][0]
+	mov eax, [num_read]
+	mov [matrix+8],eax
+
+	mov eax, 4			;printing
+	mov ebx, 1
+	mov ecx, el4
+	mov edx, l4
+	int 0x80
+
+	call read_number		;reading matrix[1][1]
+	mov eax, [num_read]
+	mov [matrix+12],eax
+
 	mov eax, 4			;printing the original matrix
 	mov ebx, 1
 	mov ecx, msg1
@@ -147,6 +203,54 @@ _start:
 	mov eax, 1
 	mov ebx, 0
 	int 0x80
+
+read_number:
+    ; read input
+    mov eax, 3
+    mov ebx, 0
+    mov ecx, num        ; number stored as string
+    mov edx, 32
+    int 0x80
+
+    ; converting the string_number into number
+    push eax
+    mov esi, num
+    call atoi
+    mov [num_read], eax
+    pop eax
+
+atoi:
+    xor eax, eax        ; clear result
+    xor ebx, ebx        ; clear temp
+    mov byte [is_negative], 0   ; reset negative flag
+    
+    ; check for minus sign
+    movzx ebx, byte [esi]
+    cmp ebx, '-'
+    jne .process_digits
+    
+    mov byte [is_negative], 1   ; set negative flag
+    inc esi             ; move past minus sign
+
+.process_digits:
+    movzx ebx, byte [esi]
+    sub ebx, '0'        ; converting ascii to number
+    jb .done            ; if not a digit
+    cmp ebx, 9
+    ja .done            ; if not a digit
+    imul eax, 10        ; multiply current number by 10
+    add eax, ebx        ; add new digit
+    inc esi             ; move to next character
+    jmp .process_digits
+
+.done:
+    ; check if number should be negative
+    cmp byte [is_negative], 1
+    jne .return
+    neg eax             ; make number negative
+
+.return:
+    ret
 
 print_float:
     ; Save original values

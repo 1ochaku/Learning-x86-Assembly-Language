@@ -26,7 +26,7 @@ print_num:
     mov ecx, buffer         ; register pointed to start of buffer
     add ecx, 11             ; moving to last byte
     
-    mov byte [ecx], 10      ; store new line at end
+    mov byte [ecx], 0      ; store null terminate
     dec ecx                 ; moving one position back
     
     mov ebx, 10             ; divisor for extracting digits
